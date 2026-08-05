@@ -1,90 +1,52 @@
 # AI Code Review Assistant 🤖
 
-AI-powered code review platform that automatically analyzes GitHub pull requests and generates security, performance, and style recommendations with inline feedback.
+AI-powered code review platform that automatically analyzes GitHub pull requests and posts inline feedback on bugs, security issues, and code quality — plus a dashboard for managing repos and browsing review history.
+
+## How It Works
+
+```
+GitHub PR opened/updated
+        │
+        ▼
+   Webhook ──► FastAPI Backend ──► AI Analysis ──► Posts comments on GitHub PR
+                     │
+                     ▼
+                PostgreSQL (stores all reviews + findings)
+                     │
+                     ▲
+                React Dashboard (manage repos, browse history, view stats)
+```
+
+1. User connects a GitHub repository via the dashboard
+2. A webhook is registered on the repo for pull request events
+3. When a PR is opened or updated, the backend fetches the diff
+4. The AI analyzes the diff for bugs, security issues, performance problems, and style
+5. Findings are posted as inline review comments directly on the GitHub PR
+6. All reviews are stored and viewable in the dashboard
 
 ## Features
 
-- 🔗 **GitHub Integration** — Connect repositories via OAuth, receive PR webhooks
-- 🧠 **AI-Powered Analysis** — Uses OpenAI GPT-4 (or local Ollama) to find bugs, security issues, and code smells
-- 📝 **Inline PR Comments** — Posts review comments directly on GitHub PRs
-- 🔒 **Security Scanning** — Detects common vulnerabilities (SQL injection, XSS, hardcoded secrets)
-- 📊 **Review Dashboard** — Browse review history with severity filtering
+- 🔗 **GitHub Integration** — OAuth login, repo connection, webhook automation
+- 🧠 **AI Analysis** — OpenAI GPT-4 (or local Ollama) reviews diffs for real issues
+- 💬 **Inline PR Comments** — Findings posted directly on GitHub, no context switching
+- 📊 **Dashboard** — Browse review history, filter by severity, view stats
+- 🔒 **Security Detection** — SQL injection, XSS, hardcoded secrets, insecure patterns
 - 🐳 **Dockerized** — Full Docker Compose setup for local dev and deployment
-- ⚡ **Async Processing** — Background task queue for non-blocking reviews
+- ⚡ **Async** — Background processing so webhooks respond instantly
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Backend | FastAPI (Python 3.11+) |
-| Database | PostgreSQL 15 |
-| Cache/Queue | Redis 7 |
+| Frontend | React + Next.js |
+| Database | PostgreSQL |
+| Cache/Queue | Redis |
 | AI | OpenAI API / Ollama |
 | Auth | GitHub OAuth + JWT |
 | Containers | Docker + Docker Compose |
 | Migrations | Alembic |
 | Testing | pytest + httpx |
-
-## Project Structure
-
-```
-├── app/
-│   ├── main.py              # FastAPI application entry
-│   ├── config.py            # Settings / environment config
-│   ├── database.py          # SQLAlchemy async engine + session
-│   ├── models/              # SQLAlchemy ORM models
-│   ├── schemas/             # Pydantic request/response schemas
-│   ├── routers/             # API route handlers
-│   ├── services/            # Business logic layer
-│   │   ├── github.py        # GitHub API client
-│   │   ├── ai_reviewer.py   # LLM integration
-│   │   └── webhook.py       # Webhook processing
-│   └── utils/               # Helpers, auth, etc.
-├── alembic/                 # Database migrations
-├── tests/                   # Test suite
-├── docker-compose.yml
-├── Dockerfile
-├── requirements.txt
-└── .env.example
-```
-
-## Quick Start
-
-### Prerequisites
-- Python 3.11+
-- Docker & Docker Compose
-- GitHub account (for OAuth app)
-- OpenAI API key (or Ollama installed locally)
-
-### 1. Clone and configure
-
-```bash
-git clone https://github.com/yourusername/AI-Code-Review-Assistant.git
-cd AI-Code-Review-Assistant
-cp .env.example .env
-# Edit .env with your credentials
-```
-
-### 2. Run with Docker Compose
-
-```bash
-docker-compose up --build
-```
-
-The API will be available at `http://localhost:8000`
-API docs at `http://localhost:8000/docs`
-
-### 3. Run locally (development)
-
-```bash
-python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # Linux/Mac
-
-pip install -r requirements.txt
-alembic upgrade head
-uvicorn app.main:app --reload
-```
 
 ## API Endpoints
 
@@ -96,11 +58,59 @@ uvicorn app.main:app --reload
 | POST | `/webhooks/github` | GitHub webhook receiver |
 | GET | `/reviews` | List all reviews |
 | GET | `/reviews/{id}` | Get review details with findings |
-| POST | `/reviews/trigger` | Manually trigger a review |
+| POST | `/reviews/trigger` | Manually trigger a review on a PR |
 
-## Environment Variables
+## Getting Started
 
-See `.env.example` for all required configuration.
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- Docker & Docker Compose
+- GitHub OAuth App (for login)
+- OpenAI API key (or Ollama for local LLM)
+
+### Setup
+
+```bash
+git clone https://github.com/yourusername/AI-Code-Review-Assistant.git
+cd AI-Code-Review-Assistant
+cp .env.example .env
+# Fill in your credentials in .env
+
+# Run everything
+docker-compose up --build
+```
+
+- API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+- Dashboard: http://localhost:3000
+
+## Project Structure
+
+```
+├── backend/
+│   ├── app/
+│   │   ├── main.py            # FastAPI entry point
+│   │   ├── config.py          # Environment settings
+│   │   ├── database.py        # SQLAlchemy async setup
+│   │   ├── models/            # ORM models
+│   │   ├── schemas/           # Pydantic schemas
+│   │   ├── routers/           # API routes
+│   │   └── services/          # Business logic (GitHub, AI, webhooks)
+│   ├── alembic/               # Database migrations
+│   ├── tests/
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── app/               # Next.js pages
+│   │   ├── components/        # React components
+│   │   └── lib/               # API client, auth helpers
+│   ├── Dockerfile
+│   └── package.json
+├── docker-compose.yml
+└── .env.example
+```
 
 ## License
 
