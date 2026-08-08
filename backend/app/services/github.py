@@ -69,3 +69,33 @@ class GitHubClient:
             )
             resp.raise_for_status()
             return resp.json()
+
+    async def get_pr_diff(self, full_name: str, pr_number: int) -> str:
+        """Fetch the raw diff for a pull request."""
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{GITHUB_API}/repos/{full_name}/pulls/{pr_number}",
+                headers={
+                    **self.headers,
+                    "Accept": "application/vnd.github.v3.diff",
+                },
+            )
+            resp.raise_for_status()
+            return resp.text
+
+    async def post_review(
+        self, full_name: str, pr_number: int, body: str, comments: list[dict]
+    ) -> dict:
+        """Post a review with inline comments on a PR."""
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{GITHUB_API}/repos/{full_name}/pulls/{pr_number}/reviews",
+                headers=self.headers,
+                json={
+                    "body": body,
+                    "event": "COMMENT",
+                    "comments": comments,
+                },
+            )
+            resp.raise_for_status()
+            return resp.json()
