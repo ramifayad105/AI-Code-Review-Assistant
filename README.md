@@ -1,116 +1,102 @@
-# AI Code Review Assistant 🤖
+# AI Code Review Assistant
 
-AI-powered code review platform that automatically analyzes GitHub pull requests and posts inline feedback on bugs, security issues, and code quality — plus a dashboard for managing repos and browsing review history.
+Automated code review tool that hooks into GitHub pull requests, runs diffs through GPT-4, and posts findings as inline comments. No manual triggering — connect a repo and it reviews every PR automatically.
 
-## How It Works
+## Overview
 
 ```
-GitHub PR opened/updated
-        │
-        ▼
-   Webhook ──► FastAPI Backend ──► AI Analysis ──► Posts comments on GitHub PR
-                     │
-                     ▼
-                PostgreSQL (stores all reviews + findings)
-                     │
-                     ▲
-                React Dashboard (manage repos, browse history, view stats)
+PR opened → GitHub webhook → FastAPI backend → AI analysis → comments posted on PR
+                                    │
+                                    └── stored in Postgres ← Dashboard reads from here
 ```
 
-1. User connects a GitHub repository via the dashboard
-2. A webhook is registered on the repo for pull request events
-3. When a PR is opened or updated, the backend fetches the diff
-4. The AI analyzes the diff for bugs, security issues, performance problems, and style
-5. Findings are posted as inline review comments directly on the GitHub PR
-6. All reviews are stored and viewable in the dashboard
+The backend does the heavy lifting. The dashboard is a management layer for connecting repos and browsing past reviews.
 
-## Features
+## Stack
 
-- 🔗 **GitHub Integration** — OAuth login, repo connection, webhook automation
-- 🧠 **AI Analysis** — OpenAI GPT-4 (or local Ollama) reviews diffs for real issues
-- 💬 **Inline PR Comments** — Findings posted directly on GitHub, no context switching
-- 📊 **Dashboard** — Browse review history, filter by severity, view stats
-- 🔒 **Security Detection** — SQL injection, XSS, hardcoded secrets, insecure patterns
-- 🐳 **Dockerized** — Full Docker Compose setup for local dev and deployment
-- ⚡ **Async** — Background processing so webhooks respond instantly
+- **Backend:** FastAPI, SQLAlchemy (async), Alembic
+- **Database:** PostgreSQL
+- **Cache:** Redis
+- **AI:** OpenAI GPT-4 (Ollama supported as local alternative)
+- **Auth:** GitHub OAuth → JWT
+- **Infra:** Docker Compose
+- **Frontend:** React / Next.js (planned)
 
-## Tech Stack
+## Setup
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | FastAPI (Python 3.11+) |
-| Frontend | React + Next.js |
-| Database | PostgreSQL |
-| Cache/Queue | Redis |
-| AI | OpenAI API / Ollama |
-| Auth | GitHub OAuth + JWT |
-| Containers | Docker + Docker Compose |
-| Migrations | Alembic |
-| Testing | pytest + httpx |
+### Requirements
 
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/github` | GitHub OAuth callback |
-| GET | `/repos` | List connected repositories |
-| POST | `/repos/connect` | Connect a GitHub repository |
-| POST | `/webhooks/github` | GitHub webhook receiver |
-| GET | `/reviews` | List all reviews |
-| GET | `/reviews/{id}` | Get review details with findings |
-| POST | `/reviews/trigger` | Manually trigger a review on a PR |
-
-## Getting Started
-
-### Prerequisites
 - Python 3.11+
-- Node.js 18+
 - Docker & Docker Compose
-- GitHub OAuth App (for login)
-- OpenAI API key (or Ollama for local LLM)
+- A GitHub OAuth App ([create one here](https://github.com/settings/applications/new))
+- OpenAI API key
 
-### Setup
+### GitHub OAuth App setup
+
+1. Go to GitHub → Settings → Developer settings → OAuth Apps → New OAuth App
+2. Set homepage URL to `http://localhost:3000`
+3. Set callback URL to `http://localhost:3000/auth/callback`
+4. Copy the Client ID and Client Secret into your `.env`
+
+### Running locally
 
 ```bash
-git clone https://github.com/yourusername/AI-Code-Review-Assistant.git
-cd AI-Code-Review-Assistant
 cp .env.example .env
-# Fill in your credentials in .env
+# Fill in GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, OPENAI_API_KEY
 
-# Run everything
 docker-compose up --build
 ```
 
-- API: http://localhost:8000
-- API Docs: http://localhost:8000/docs
-- Dashboard: http://localhost:3000
+API: http://localhost:8000
+Docs: http://localhost:8000/docs
 
-## Project Structure
+Apply database migrations:
+```bash
+docker-compose exec backend alembic upgrade head
+```
+
+## Project structure
 
 ```
-├── backend/
-│   ├── app/
-│   │   ├── main.py            # FastAPI entry point
-│   │   ├── config.py          # Environment settings
-│   │   ├── database.py        # SQLAlchemy async setup
-│   │   ├── models/            # ORM models
-│   │   ├── schemas/           # Pydantic schemas
-│   │   ├── routers/           # API routes
-│   │   └── services/          # Business logic (GitHub, AI, webhooks)
-│   ├── alembic/               # Database migrations
-│   ├── tests/
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── app/               # Next.js pages
-│   │   ├── components/        # React components
-│   │   └── lib/               # API client, auth helpers
-│   ├── Dockerfile
-│   └── package.json
-├── docker-compose.yml
-└── .env.example
+backend/
+├── app/
+│   ├── main.py              # App entry, router registration
+│   ├── config.py            # Env-based settings
+│   ├── database.py          # Async SQLAlchemy engine
+│   ├── models/              # ORM models (user, repo, review, finding)
+│   ├── routers/             # API endpoints
+│   ├── services/            # GitHub client, AI reviewer
+│   └── utils/               # JWT auth helpers
+├── alembic/                 # Migrations
+├── Dockerfile
+└── requirements.txt
 ```
+
+## API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /auth/github | OAuth login, returns JWT |
+| GET | /auth/me | Current user profile |
+| GET | /repos | List connected repos |
+| POST | /repos/connect | Register a repo + set up webhook |
+| POST | /webhooks/github | Receives PR events from GitHub |
+| GET | /reviews | Review history |
+| GET | /reviews/:id | Review detail with findings |
+| POST | /reviews/trigger | Manually kick off a review |
+
+## Status
+
+Work in progress. Building in phases:
+
+- [x] Project scaffolding + Docker Compose
+- [x] Database models + migrations
+- [x] GitHub OAuth login
+- [ ] Repository connection + webhook setup
+- [ ] Webhook processing + AI review pipeline
+- [ ] Dashboard (Next.js)
+- [ ] Background job queue
+- [ ] CI/CD + deployment
 
 ## License
 
