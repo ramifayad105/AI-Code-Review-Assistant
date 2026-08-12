@@ -64,12 +64,20 @@ export default function Home() {
           </div>
         </div>
         <p className="text-green-400">Logged in</p>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 transition"
-        >
-          Logout
-        </button>
+        <div className="flex gap-3">
+          <a
+            href="/repos"
+            className="px-4 py-2 bg-white text-black font-medium rounded hover:bg-gray-200 transition"
+          >
+            Repositories
+          </a>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-gray-800 rounded hover:bg-gray-700 transition"
+          >
+            Logout
+          </button>
+        </div>
       </main>
     )
   }
