@@ -6,6 +6,7 @@ from app.routers import auth
 from app.routers import repos
 from app.routers import webhooks
 from app.routers import reviews
+from app.routers import stats
 
 settings = get_settings()
 
@@ -29,6 +30,7 @@ app.include_router(auth.router)
 app.include_router(repos.router)
 app.include_router(webhooks.router)
 app.include_router(reviews.router)
+app.include_router(stats.router)
 
 
 @app.get("/health")

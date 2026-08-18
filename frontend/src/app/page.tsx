@@ -66,6 +66,12 @@ export default function Home() {
         <p className="text-green-400">Logged in</p>
         <div className="flex gap-3">
           <a
+            href="/dashboard"
+            className="px-4 py-2 bg-white text-black font-medium rounded hover:bg-gray-200 transition"
+          >
+            Dashboard
+          </a>
+          <a
             href="/repos"
             className="px-4 py-2 bg-white text-black font-medium rounded hover:bg-gray-200 transition"
           >
