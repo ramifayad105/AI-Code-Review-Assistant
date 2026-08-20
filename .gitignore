@@ -163,3 +163,7 @@ cython_debug/
 
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
+
+# Node (root-level accidents)
+node_modules/
+package-lock.json

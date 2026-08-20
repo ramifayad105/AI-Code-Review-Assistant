@@ -3,14 +3,14 @@
 import hashlib
 import hmac
 
-from fastapi import APIRouter, Request, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, Request, HTTPException, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.database import get_db
 from app.models.repository import Repository
-from app.services.review_pipeline import run_review
+from app.services.queue import enqueue_review
 
 settings = get_settings()
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
@@ -31,12 +31,11 @@ def verify_signature(payload: bytes, signature: str) -> bool:
 @router.post("/github")
 async def github_webhook(
     request: Request,
-    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """
     Receives pull_request events from GitHub.
-    Kicks off an AI review in the background so we respond fast.
+    Pushes review job to Redis queue for the worker to pick up.
     """
     # Verify it's legit
     signature = request.headers.get("X-Hub-Signature-256", "")
@@ -70,10 +69,9 @@ async def github_webhook(
     if not repo:
         return {"status": "ignored", "reason": "repo not registered"}
 
-    # Run the review in the background (don't block the webhook response)
+    # Push to Redis queue (worker picks it up)
     pr_data = payload["pull_request"]
-    background_tasks.add_task(
-        run_review,
+    await enqueue_review(
         repo_id=str(repo.id),
         owner_id=str(repo.owner_id),
         pr_number=pr_data["number"],
