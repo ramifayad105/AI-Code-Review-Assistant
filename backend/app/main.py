@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.middleware import RateLimitMiddleware, ErrorHandlerMiddleware
 from app.routers import auth
 from app.routers import repos
 from app.routers import webhooks
@@ -16,7 +17,9 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS - allow frontend to talk to backend
+# Middleware (order matters — outermost runs first)
+app.add_middleware(ErrorHandlerMiddleware)
+app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
