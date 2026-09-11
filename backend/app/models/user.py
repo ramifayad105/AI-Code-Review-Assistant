@@ -18,7 +18,8 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(255), unique=True)
     email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     avatar_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
-    access_token: Mapped[str] = mapped_column(String(255))
+    # Stored encrypted (Fernet) — ciphertext is longer than the raw token
+    access_token: Mapped[str] = mapped_column(String(512))
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow
     )

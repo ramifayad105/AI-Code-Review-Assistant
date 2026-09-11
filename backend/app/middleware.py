@@ -7,6 +7,10 @@ from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from app.logging_config import get_logger
+
+logger = get_logger(__name__)
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
@@ -51,8 +55,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         except HTTPException:
             raise  # Let FastAPI handle these normally
         except Exception as e:
-            # Log it (in production use proper logging)
-            print(f"[error] Unhandled: {type(e).__name__}: {e}")
+            logger.exception("Unhandled exception: %s: %s", type(e).__name__, e)
             return JSONResponse(
                 status_code=500,
                 content={"detail": "Internal server error"},

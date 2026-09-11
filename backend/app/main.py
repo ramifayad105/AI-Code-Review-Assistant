@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
+from app.logging_config import configure_logging
 from app.middleware import RateLimitMiddleware, ErrorHandlerMiddleware
 from app.routers import auth
 from app.routers import repos
@@ -9,6 +10,7 @@ from app.routers import webhooks
 from app.routers import reviews
 from app.routers import stats
 
+configure_logging()
 settings = get_settings()
 
 app = FastAPI(
@@ -22,7 +24,7 @@ app.add_middleware(ErrorHandlerMiddleware)
 app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { API_BASE } from "@/lib/api"
 
 const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || ""
 
@@ -19,7 +20,7 @@ export default function Home() {
 
   async function fetchUser(jwt: string) {
     try {
-      const res = await fetch("http://localhost:8000/auth/me", {
+      const res = await fetch(`${API_BASE}/auth/me`, {
         headers: { Authorization: `Bearer ${jwt}` },
       })
       if (res.ok) {

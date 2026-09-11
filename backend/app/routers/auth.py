@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.user import User
 from app.services.github import GitHubClient
 from app.utils.auth import create_access_token, get_current_user
+from app.utils.crypto import encrypt_token
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -72,9 +73,11 @@ async def github_login(
     result = await db.execute(stmt)
     user = result.scalar_one_or_none()
 
+    encrypted_token = encrypt_token(access_token)
+
     if user:
         # Update existing user
-        user.access_token = access_token
+        user.access_token = encrypted_token
         user.username = github_user["login"]
         user.avatar_url = github_user.get("avatar_url")
     else:
@@ -84,7 +87,7 @@ async def github_login(
             username=github_user["login"],
             email=github_user.get("email"),
             avatar_url=github_user.get("avatar_url"),
-            access_token=access_token,
+            access_token=encrypted_token,
         )
         db.add(user)
 

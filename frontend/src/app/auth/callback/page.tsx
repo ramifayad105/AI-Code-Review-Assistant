@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { API_BASE } from "@/lib/api"
 
 function CallbackHandler() {
   const router = useRouter()
@@ -19,7 +20,7 @@ function CallbackHandler() {
 
   async function exchangeCode(code: string) {
     try {
-      const res = await fetch("http://localhost:8000/auth/github", {
+      const res = await fetch(`${API_BASE}/auth/github`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code }),

@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.repository import Repository
 from app.services.github import GitHubClient
 from app.utils.auth import get_current_user
+from app.utils.crypto import decrypt_token
 from app.config import get_settings
 
 settings = get_settings()
@@ -60,7 +61,7 @@ async def connect_repo(
     Connect a GitHub repo for automated reviews.
     Checks access, saves to DB, and sets up a webhook.
     """
-    github = GitHubClient(access_token=user.access_token)
+    github = GitHubClient(access_token=decrypt_token(user.access_token))
 
     # Make sure the user actually has access to this repo
     try:
@@ -79,9 +80,9 @@ async def connect_repo(
     webhook_id = None
     webhook_active = False
     try:
-        # In production this would be your real domain
-        callback = f"https://your-domain.com/webhooks/github"
-        hook_data = await github.create_webhook(body.full_name, callback)
+        hook_data = await github.create_webhook(
+            body.full_name, settings.webhook_callback_url
+        )
         webhook_id = hook_data["id"]
         webhook_active = True
     except Exception:

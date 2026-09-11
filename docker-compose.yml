@@ -27,6 +27,28 @@ services:
       - ./backend:/app
     command: python -m app.worker
 
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # NEXT_PUBLIC_* are baked in at build time
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+
   db:
     image: postgres:15-alpine
     environment:

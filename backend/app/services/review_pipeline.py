@@ -8,12 +8,18 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from app.config import get_settings
 from app.database import AsyncSessionLocal
+from app.logging_config import get_logger
 from app.models.user import User
 from app.models.review import Review, ReviewStatus
 from app.models.finding import Finding, Severity, FindingCategory
 from app.services.github import GitHubClient
 from app.services.ai_reviewer import AIReviewer
+from app.utils.crypto import decrypt_token
+
+settings = get_settings()
+logger = get_logger(__name__)
 
 
 async def run_review(
@@ -51,9 +57,20 @@ async def run_review(
         await db.flush()
 
         try:
-            # 1. Fetch the diff from GitHub
-            github = GitHubClient(access_token=user.access_token)
+            # 1. Fetch the diff from GitHub (token is stored encrypted at rest)
+            github = GitHubClient(access_token=decrypt_token(user.access_token))
             diff = await github.get_pr_diff(full_name, pr_number)
+
+            # Guard against enormous diffs — truncate to protect cost/timeouts
+            if len(diff) > settings.max_diff_chars:
+                logger.warning(
+                    "Diff for PR #%s is %s chars; truncating to %s",
+                    pr_number, len(diff), settings.max_diff_chars,
+                )
+                diff = (
+                    diff[: settings.max_diff_chars]
+                    + "\n\n[diff truncated — too large to review in full]"
+                )
 
             # 2. Send to AI for analysis
             reviewer = AIReviewer()
@@ -102,7 +119,11 @@ async def run_review(
             review.completed_at = datetime.utcnow()
 
         except Exception as e:
+            logger.exception("Review pipeline failed for PR #%s: %s", pr_number, e)
             review.status = ReviewStatus.FAILED
             review.summary = f"Review failed: {str(e)}"
+            await db.commit()
+            # Re-raise so the worker's retry logic can kick in
+            raise
 
         await db.commit()

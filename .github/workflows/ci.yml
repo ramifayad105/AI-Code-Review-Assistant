@@ -52,6 +52,14 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/code_review
         run: alembic upgrade head
 
+      - name: Run tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/code_review
+          REDIS_URL: redis://localhost:6379/0
+          SECRET_KEY: ci-test-key
+        run: python -m pytest -q
+
       - name: Start server and health check
         working-directory: backend
         env:
