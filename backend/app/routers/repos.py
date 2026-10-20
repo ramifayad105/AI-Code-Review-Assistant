@@ -28,7 +28,7 @@ class RepoResponse(BaseModel):
     webhook_active: bool
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 @router.get("", response_model=list[RepoResponse])
