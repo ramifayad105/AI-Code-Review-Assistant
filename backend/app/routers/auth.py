@@ -33,7 +33,7 @@ class UserResponse(BaseModel):
     avatar_url: str | None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 # --- Routes ---

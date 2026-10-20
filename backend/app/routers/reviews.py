@@ -29,7 +29,7 @@ class FindingOut(BaseModel):
     code_snippet: str | None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class ReviewOut(BaseModel):
@@ -44,7 +44,7 @@ class ReviewOut(BaseModel):
     repo_full_name: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class ReviewDetailOut(ReviewOut):
