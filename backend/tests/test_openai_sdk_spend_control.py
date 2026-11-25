@@ -1,9 +1,8 @@
 """Regression tests for the OpenAI SDK upgrade.
 
 The app's only OpenAI call site is a chat completion. Upgrading the SDK must
-keep that request shape intact, and the removed Managed Agents
-``spend_control`` request property must no longer be part of the installed
-SDK's session-create parameters.
+keep that request shape intact, and the app must never send Managed Agents
+``spend_control`` even though upstream re-added the property in openai 3.58.0.
 """
 
 import types
@@ -63,7 +62,7 @@ async def test_openai_review_request_never_sends_spend_control():
     assert result == {"summary": "Looks good.", "findings": []}
 
 
-def test_openai_sdk_no_longer_exposes_session_spend_control():
+def test_openai_sdk_session_spend_control_matches_supported_sdk():
     try:
         from openai.types.beta.agents.session_create_params import (
             SessionCreateParamsBase,
@@ -71,7 +70,9 @@ def test_openai_sdk_no_longer_exposes_session_spend_control():
     except ModuleNotFoundError:
         pytest.fail(
             "OpenAI SDK is too old: managed-agent session params are unavailable, "
-            "so the removed spend_control property cannot be verified"
+            "so the spend_control contract cannot be verified"
         )
 
-    assert "spend_control" not in SessionCreateParamsBase.__annotations__
+    # openai 3.58.0 re-introduced session spending limits. The app-level test
+    # above still guarantees the reviewer never opts into them.
+    assert "spend_control" in SessionCreateParamsBase.__annotations__
